@@ -36,11 +36,7 @@ API REST para gestionar una **biblioteca**:
 
 ## 3) Diagrama Entidad–Relación
 
-```text
-docs/
-  er/
-    erd-overview.png
-```
+![EER Overview](docs/er/erd-overview.png)
 
 # 4) Instalación local
 
