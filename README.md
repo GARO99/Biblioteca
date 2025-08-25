@@ -40,6 +40,7 @@ API REST para gestionar una **biblioteca**:
 docs/
   er/
     erd-overview.png
+```
 
 # 4) Instalación local
 
