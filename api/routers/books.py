@@ -1,9 +1,11 @@
 from uuid import UUID
 from typing import Optional, List
-from fastapi import APIRouter, Depends, status
+from fastapi import APIRouter, BackgroundTasks, Depends, status
 from api.deps import get_uow
 from api.schemas.book import BookCreate, BookUpdate, BookRead
+from api.security.deps import require_admin, require_employee
 from domain.entities.catalog.book import Book
+from domain.services.book_semantic_openai_service import BookSemanticOpenAIService
 from domain.services.book_service import BookService
 from domain.uow.unit_of_work import UnitOfWork
 from utils.exceptions.not_found_error_exception import NotFoundErrorException
@@ -24,7 +26,13 @@ def _to_book_read(book: Book) -> BookRead:
         genre_ids=genre_ids or None,
     )
 
-@router.post("/", response_model=BookRead, status_code=status.HTTP_201_CREATED)
+@router.get("/semantic-search", response_model=List[BookRead])
+def semantic_search(q: str, k: int = 10, uow: UnitOfWork = Depends(get_uow)):
+    svc = BookSemanticOpenAIService(uow)
+    books = svc.search(q=q, k=min(max(k, 1), 50))
+    return [_to_book_read(b) for b in books]
+
+@router.post("/", response_model=BookRead, status_code=status.HTTP_201_CREATED, dependencies=[Depends(require_employee)])
 def create_book(payload: BookCreate, uow: UnitOfWork = Depends(get_uow)):
     svc = BookService(uow)
     book = svc.create(
@@ -56,7 +64,13 @@ def get_book(book_id: UUID, uow: UnitOfWork = Depends(get_uow)):
         raise NotFoundErrorException("Libro no encontrado")
     return _to_book_read(book)
 
-@router.put("/{book_id}", response_model=BookRead)
+@router.post("/semantic-reindex", status_code=status.HTTP_202_ACCEPTED, dependencies=[Depends(require_admin)])
+def semantic_reindex(background: BackgroundTasks, uow: UnitOfWork = Depends(get_uow)):
+    svc = BookSemanticOpenAIService(uow)
+    background.add_task(svc.rebuild)
+    return {"detail": "Reindex en progreso"}
+
+@router.put("/{book_id}", response_model=BookRead, dependencies=[Depends(require_employee)])
 def update_book(book_id: UUID, payload: BookUpdate, uow: UnitOfWork = Depends(get_uow)):
     svc = BookService(uow)
     book = svc.update(
@@ -71,7 +85,7 @@ def update_book(book_id: UUID, payload: BookUpdate, uow: UnitOfWork = Depends(ge
         )
     return _to_book_read(book)
 
-@router.delete("/{book_id}", status_code=status.HTTP_204_NO_CONTENT)
+@router.delete("/{book_id}", status_code=status.HTTP_204_NO_CONTENT, dependencies=[Depends(require_employee)])
 def delete_book(book_id: UUID, uow: UnitOfWork = Depends(get_uow)):
     svc = BookService(uow)
     svc.delete(book_id)

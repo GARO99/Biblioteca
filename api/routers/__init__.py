@@ -1,4 +1,5 @@
 from fastapi import APIRouter
+from api.routers.auth import router as auth_router
 from api.routers.books import router as books_router
 from api.routers.authors import router as authors_router
 from api.routers.genres import router as genres_router
@@ -10,6 +11,7 @@ from api.routers.holds import router as holds_router
 from api.routers.fines import router as fines_router
 
 routers = APIRouter()
+routers.include_router(auth_router,      prefix="/auth",      tags=["auth"])
 routers.include_router(books_router,      prefix="/books",      tags=["books"])
 routers.include_router(authors_router,    prefix="/authors",    tags=["authors"])
 routers.include_router(genres_router,     prefix="/genres",     tags=["genres"])

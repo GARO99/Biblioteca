@@ -5,12 +5,13 @@ from fastapi import APIRouter, Depends, status
 
 from api.schemas.copy import CopyCreate, CopyUpdate, CopyRead
 from api.deps import get_uow
+from api.security.deps import require_employee
 from domain.uow.unit_of_work import UnitOfWork
 from domain.services.copy_service import CopyService
 
 router = APIRouter()
 
-@router.post("/", response_model=CopyRead, status_code=status.HTTP_201_CREATED)
+@router.post("/", response_model=CopyRead, status_code=status.HTTP_201_CREATED, dependencies=[Depends(require_employee)])
 def create_copy(payload: CopyCreate, uow: UnitOfWork = Depends(get_uow)):
     svc = CopyService(uow)
     copy = svc.create(
@@ -38,7 +39,7 @@ def get_copy(copy_id: UUID, uow: UnitOfWork = Depends(get_uow)):
     svc = CopyService(uow)
     return svc.get(copy_id)
 
-@router.put("/{copy_id}", response_model=CopyRead)
+@router.put("/{copy_id}", response_model=CopyRead, dependencies=[Depends(require_employee)])
 def update_copy(copy_id: UUID, payload: CopyUpdate, uow: UnitOfWork = Depends(get_uow)):
     svc = CopyService(uow)
     copy = svc.update(
@@ -49,7 +50,7 @@ def update_copy(copy_id: UUID, payload: CopyUpdate, uow: UnitOfWork = Depends(ge
     )
     return copy
 
-@router.delete("/{copy_id}", status_code=status.HTTP_204_NO_CONTENT)
+@router.delete("/{copy_id}", status_code=status.HTTP_204_NO_CONTENT, dependencies=[Depends(require_employee)])
 def delete_copy(copy_id: UUID, uow: UnitOfWork = Depends(get_uow)):
     svc = CopyService(uow)
     svc.delete(copy_id)

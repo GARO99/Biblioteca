@@ -4,6 +4,7 @@ from starlette.middleware.cors import CORSMiddleware
 from api.routers import routers
 from core.project_config import ProjectConfig
 from db.db_context import DbContext
+from domain.seeds.seed_admin import seed_default_admin
 from domain.uow.unit_of_work import UnitOfWorkFactory
 from middlewares.exception_handler_middleware import ExceptionHandlerMiddleware
 from utils.singleton import singleton
@@ -45,6 +46,11 @@ class AppCreator:
             routers,
             prefix=ProjectConfig.API_PREFIX()
         )
+        
+        def _run_seed() -> None:
+            # usa la fábrica de UoW del state (patrón recomendado: app.state) 
+            seed_default_admin(self.app.state.uow_factory)
+        self.app.add_event_handler("startup", _run_seed)
 
 
 app_creator = AppCreator()

@@ -5,12 +5,13 @@ from fastapi import APIRouter, Depends, status
 
 from api.schemas.genre import GenreCreate, GenreUpdate, GenreRead
 from api.deps import get_uow
+from api.security.deps import require_employee
 from domain.uow.unit_of_work import UnitOfWork
 from domain.services.genre_service import GenreService
 
 router = APIRouter()
 
-@router.post("/", response_model=GenreRead, status_code=status.HTTP_201_CREATED)
+@router.post("/", response_model=GenreRead, status_code=status.HTTP_201_CREATED, dependencies=[Depends(require_employee)])
 def create_genre(payload: GenreCreate, uow: UnitOfWork = Depends(get_uow)):
     svc = GenreService(uow)
     genre = svc.create(name=payload.name, description=payload.description)
@@ -27,12 +28,12 @@ def get_genre(genre_id: UUID, uow: UnitOfWork = Depends(get_uow)):
     svc = GenreService(uow)
     return svc.get(genre_id)
 
-@router.put("/{genre_id}", response_model=GenreRead)
+@router.put("/{genre_id}", response_model=GenreRead, dependencies=[Depends(require_employee)])
 def update_genre(genre_id: UUID, payload: GenreUpdate, uow: UnitOfWork = Depends(get_uow)):
     svc = GenreService(uow)
     return svc.update(genre_id, name=payload.name, description=payload.description)
 
-@router.delete("/{genre_id}", status_code=status.HTTP_204_NO_CONTENT)
+@router.delete("/{genre_id}", status_code=status.HTTP_204_NO_CONTENT, dependencies=[Depends(require_employee)])
 def delete_genre(genre_id: UUID, uow: UnitOfWork = Depends(get_uow)):
     svc = GenreService(uow)
     svc.delete(genre_id)

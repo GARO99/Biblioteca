@@ -1,9 +1,9 @@
 from contextlib import contextmanager
 from typing import Any, Generator
 
-from sqlalchemy import create_engine, orm
+from sqlalchemy import create_engine
 from sqlalchemy.ext.declarative import as_declarative, declared_attr
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, sessionmaker
 
 
 @as_declarative()
@@ -20,12 +20,12 @@ class DbContext:
 
     def __init__(self, db_url: str) -> None:
         self._engine = create_engine(db_url, echo=True)
-        self._session_factory = orm.scoped_session(
-            orm.sessionmaker(
-                autocommit=False,
-                autoflush=False,
-                bind=self._engine,
-            ),
+        self._session_factory = sessionmaker(
+            bind=self._engine,
+            autoflush=False,
+            autocommit=False,
+            expire_on_commit=False,
+            future=True,
         )
 
     @property

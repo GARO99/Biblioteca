@@ -8,6 +8,7 @@ from sqlmodel import SQLModel
 
 from core.project_config import ProjectConfig
 
+from domain.entities.security.user import User
 from domain.entities.catalog.author import Author
 from domain.entities.catalog.publisher import Publisher
 from domain.entities.catalog.genre import Genre

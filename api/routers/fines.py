@@ -5,12 +5,13 @@ from fastapi import APIRouter, Depends, status
 
 from api.schemas.fine import FineCreate, FineUpdate, FinePay, FineRead
 from api.deps import get_uow
+from api.security.deps import require_employee
 from domain.uow.unit_of_work import UnitOfWork
 from domain.services.fine_service import FineService
 
 router = APIRouter()
 
-@router.post("/", response_model=FineRead, status_code=status.HTTP_201_CREATED)
+@router.post("/", response_model=FineRead, status_code=status.HTTP_201_CREATED, dependencies=[Depends(require_employee)])
 def create_fine(payload: FineCreate, uow: UnitOfWork = Depends(get_uow)):
     svc = FineService(uow)
     fine = svc.create(
@@ -21,18 +22,18 @@ def create_fine(payload: FineCreate, uow: UnitOfWork = Depends(get_uow)):
     )
     return fine
 
-@router.get("/", response_model=List[FineRead])
+@router.get("/", response_model=List[FineRead], dependencies=[Depends(require_employee)])
 def list_fines(member_id: Optional[UUID] = None, skip: int = 0, limit: int = 50,
                uow: UnitOfWork = Depends(get_uow)):
     svc = FineService(uow)
     return svc.list(member_id=member_id, skip=skip, limit=limit)
 
-@router.get("/{fine_id}", response_model=FineRead)
+@router.get("/{fine_id}", response_model=FineRead, dependencies=[Depends(require_employee)])
 def get_fine(fine_id: UUID, uow: UnitOfWork = Depends(get_uow)):
     svc = FineService(uow)
     return svc.get(fine_id)
 
-@router.put("/{fine_id}", response_model=FineRead)
+@router.put("/{fine_id}", response_model=FineRead, dependencies=[Depends(require_employee)])
 def update_fine(fine_id: UUID, payload: FineUpdate, uow: UnitOfWork = Depends(get_uow)):
     svc = FineService(uow)
     fine = svc.update(
@@ -45,13 +46,13 @@ def update_fine(fine_id: UUID, payload: FineUpdate, uow: UnitOfWork = Depends(ge
     )
     return fine
 
-@router.post("/{fine_id}/pay", response_model=FineRead)
+@router.post("/{fine_id}/pay", response_model=FineRead, dependencies=[Depends(require_employee)])
 def pay_fine(fine_id: UUID, payload: FinePay, uow: UnitOfWork = Depends(get_uow)):
     svc = FineService(uow)
     fine = svc.pay(fine_id, paid_at=payload.paid_at)
     return fine
 
-@router.delete("/{fine_id}", status_code=status.HTTP_204_NO_CONTENT)
+@router.delete("/{fine_id}", status_code=status.HTTP_204_NO_CONTENT, dependencies=[Depends(require_employee)])
 def delete_fine(fine_id: UUID, uow: UnitOfWork = Depends(get_uow)):
     svc = FineService(uow)
     svc.delete(fine_id)

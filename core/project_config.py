@@ -1,5 +1,6 @@
 import os
 from dotenv import load_dotenv
+from fastapi.security import OAuth2PasswordBearer
 from pydantic_settings import BaseSettings
 
 load_dotenv()
@@ -13,6 +14,10 @@ class ProjectConfig(BaseSettings):
     DB_PORT: str = os.getenv("DB_PORT")
     DB_ENGINE: str = os.getenv("DB_ENGINE")
     DB_NAME: str = os.getenv("DB_NAME")
+    
+    JWT_SECRET: str = os.getenv("JWT_SECRET")
+    JWT_ALGORITHM: str = os.getenv("JWT_ALGORITHM")
+    ACCESS_TOKEN_EXPIRE_MINUTES: int = int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES"))
 
     @property
     def DATABASE_URI(self) -> str:
@@ -32,7 +37,15 @@ class ProjectConfig(BaseSettings):
     @staticmethod
     def API_PREFIX() -> str:
         return "/api"
+    
+    @staticmethod
+    def OAUTH2_SCHEME_EMPLOYEED() -> OAuth2PasswordBearer:
+        return OAuth2PasswordBearer(tokenUrl="/api/auth/signin")
 
     @staticmethod
     def BACKEND_CORS_ORIGINS() -> list[str]:
-        return ["*"]
+        raw = os.getenv("CORS_ORIGINS", "*")
+        if raw.strip() == "*":
+            return ["*"]
+        # split por comas, limpiar espacios
+        return [o.strip() for o in raw.split(",") if o.strip()]

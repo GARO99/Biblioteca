@@ -5,12 +5,13 @@ from fastapi import APIRouter, Depends, status
 
 from api.schemas.publisher import PublisherCreate, PublisherUpdate, PublisherRead
 from api.deps import get_uow
+from api.security.deps import require_employee
 from domain.uow.unit_of_work import UnitOfWork
 from domain.services.publisher_service import PublisherService
 
 router = APIRouter()
 
-@router.post("/", response_model=PublisherRead, status_code=status.HTTP_201_CREATED)
+@router.post("/", response_model=PublisherRead, status_code=status.HTTP_201_CREATED, dependencies=[Depends(require_employee)])
 def create_publisher(payload: PublisherCreate, uow: UnitOfWork = Depends(get_uow)):
     svc = PublisherService(uow)
     pub = svc.create(name=payload.name, website=payload.website)
@@ -27,12 +28,12 @@ def get_publisher(publisher_id: UUID, uow: UnitOfWork = Depends(get_uow)):
     svc = PublisherService(uow)
     return svc.get(publisher_id)
 
-@router.put("/{publisher_id}", response_model=PublisherRead)
+@router.put("/{publisher_id}", response_model=PublisherRead, dependencies=[Depends(require_employee)])
 def update_publisher(publisher_id: UUID, payload: PublisherUpdate, uow: UnitOfWork = Depends(get_uow)):
     svc = PublisherService(uow)
     return svc.update(publisher_id, name=payload.name, website=payload.website)
 
-@router.delete("/{publisher_id}", status_code=status.HTTP_204_NO_CONTENT)
+@router.delete("/{publisher_id}", status_code=status.HTTP_204_NO_CONTENT, dependencies=[Depends(require_employee)])
 def delete_publisher(publisher_id: UUID, uow: UnitOfWork = Depends(get_uow)):
     svc = PublisherService(uow)
     svc.delete(publisher_id)
